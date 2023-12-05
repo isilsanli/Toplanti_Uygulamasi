@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toplantı Planlama </title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #ffc0cb; 
+        }
+
+        .container {
+            max-width: 800px; 
+            width: 80%;
+            background-color: #ffffff;
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
+            margin-top: 40px; 
+        }
+
+        label {
+            display: block;
+            font-size: 18px; 
+            margin-bottom: 12px;
+            color: #000000; 
+        }
+
+        input {
+            width: calc(100% - 20px);
+            padding: 14px; 
+            margin-bottom: 20px; 
+            border: 2px solid #ccc; 
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 20px; 
+            color: #666; 
+        }
+
+        button {
+            width: 100%;
+            padding: 25px; 
+            background-color: #f17ea1;
+            color: #fff;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 18px; 
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #ffb6c1; 
+        }
+
+        
+
+        #meetingDetails{
+            font-size: 20px;
+
+        }
+
+
+        .ui-datepicker {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-left: 180px; 
+            font-size: 20px;
+        }
+
+        .ui-datepicker-header {
+            background-color: #f17ea1; 
+            color: #fff; 
+            border-bottom: 1px solid #dddddd;
+        }
+
+        .ui-datepicker-title {
+            font-weight: bold;
+        }
+
+        .ui-datepicker-prev,
+        .ui-datepicker-next {
+            background-color: #f17ea1; 
+            color: #fff; 
+            border: 1px solid #f17ea1; 
+            border-radius: 5px;
+        }
+
+        .ui-datepicker-prev:hover,
+        .ui-datepicker-next:hover {
+            background-color: #f17ea1; 
+            border: 1px solid #f17ea1;
+        }
+
+        .ui-datepicker-calendar {
+            color: #333; 
+        }
+
+        .ui-state-default,
+        .ui-widget-content .ui-state-default {
+            background-color: #f0f0f0; 
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .ui-state-hover,
+        .ui-widget-content .ui-state-hover {
+            background-color: #e0e0e0; 
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .ui-state-active,
+        .ui-widget-content .ui-state-active {
+            background-color: #f17ea1; 
+            border: 1px solid #f17ea1;
+            color: #fff;
+        }
+        #bestTimeMessage{
+            font-size: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+
+
+<div class="container">
+
+    <label for="participantNameInput">Adınızı Giriniz(Lütfen Büyük Harf İle Başlayınız):</label>
+    <input type="text" id="participantNameInput">
+
+    <label for="meetingCodeInput">Toplantı Kodu Oluşturun:</label>
+    <input type="text" id="meetingCodeInput">
+
+    <button onclick="joinMeeting()">Kendiniz İçin En Uygun Tarihleri Seçin</button>
+
+    <div id="calendar">
+
+        <div id="datepicker"></div>
+
+
+    </div>
+
+    <div id="meetingDetails">
+        <h3>Toplantı Detayları</h3>
+        <ul id="bestTimesList"></ul>
+    </div>
+
+    <div id="bestTimeMessage"></div>
+
+    <button onclick="viewMeetingData()">Toplantı Bilgilerine Erişin</button>
+
+</div>
+
+<script>
+    let meetingData = {};
+
+    let meetingCode;
+    let selectedDates = {};
+
+    function joinMeeting() {
+        let participantName = document.getElementById("participantNameInput").value;
+        meetingCode = document.getElementById("meetingCodeInput").value;
+
+        if (!selectedDates[participantName]) {
+            selectedDates[participantName] = {
+                dates: [],
+                descriptions: []
+            };
+        }
+
+        showCalendar();
+    }
+
+    function showCalendar() {
+        let calendarDiv = document.getElementById("calendar");
+        calendarDiv.style.display = "block";
+
+
+        $("#datepicker").datepicker({
+            dateFormat: "dd-mm-yy",
+            onSelect: function (dateText) {
+                selectDate(dateText);
+            }
+        });
+    }
+
+    function selectDate(date) {
+        let participantName = document.getElementById("participantNameInput").value;
+        selectedDates[participantName].dates.push(date);
+        selectedDates[participantName].descriptions.push(prompt("Açıklama ekleyiniz:"));
+
+        updateBestTimesList();
+    }
+
+    function updateBestTimesList() {
+        let bestTimesList = document.getElementById("bestTimesList");
+        bestTimesList.innerHTML = "";
+
+        // Her katılımcının seçtiği tarihleri ve açıklamalarını göster
+        for (let participant in selectedDates) {
+            let listItem = document.createElement("li");
+            listItem.innerHTML = `<strong>${participant}:</strong>`;
+            for (let i = 0; i < selectedDates[participant].dates.length; i++) {
+                listItem.innerHTML += `<br>${selectedDates[participant].dates[i]} - ${selectedDates[participant].descriptions[i] || "Açıklama Yok"}`;
+            }
+            bestTimesList.appendChild(listItem);
+        }
+
+        let meetingDetailsDiv = document.getElementById("meetingDetails");
+        meetingDetailsDiv.style.display = "block";
+
+        checkBestTime();
+    }
+
+    function checkBestTime() {
+        let participants = ["Merve", "Ayşe", "Ali", "Mehmet"];
+        let commonDates = selectedDates[participants[0]].dates;
+
+        for (let i = 1; i < participants.length; i++) {
+            commonDates = commonDates.filter(date => selectedDates[participants[i]].dates.includes(date));
+        }
+
+        let bestTimeMessage = document.getElementById("bestTimeMessage");
+
+        if (commonDates.length > 0) {
+            bestTimeMessage.innerHTML = `Toplantı için en uygun tarih: ${commonDates[0]}<br>`;
+            bestTimeMessage.innerHTML += `<a href="#" onclick="addToGoogleCalendar('${commonDates[0]}')">Google Takvim'e Ekle <br> </a>`;
+            // meetingData'ya veriyi ekle
+            meetingData[meetingCode] = {
+                commonDate: commonDates[0],
+                participants: participants
+            };
+        } else {
+            bestTimeMessage.textContent = "Ortak uygun bir tarih bulunamadı!";
+        }
+    }
+
+    function addToGoogleCalendar(date) {
+        let participantName = document.getElementById("participantNameInput").value;
+        let description = selectedDates[participantName].descriptions.join("\n");
+
+
+        let googleCalendarLink = `https://www.google.com/calendar/render?action=TEMPLATE&text=Toplantı&details=${description}&dates=${date}/${date}&location=&sf=true&output=xml`;
+
+        window.location.href = googleCalendarLink;
+    }
+
+    function viewMeetingData() {
+        let code = prompt("Toplantı Kodunu Giriniz:");
+        let data = meetingData[code];
+
+        if (data) {
+            alert(`Toplantı Kodu: ${code}\nEn Uygun Tarih: ${data.commonDate}\nKatılımcılar: ${data.participants.join(", ")}`);
+        } else {
+            alert("Girilen toplantı koduyla ilişkilendirilmiş herhangi bir toplantı bulunamadı.");
+        }
+    }
+
+    
+    
+    
+
+
+
+
+
+
+
+
+
+</script>
+
+</body>
+</html>
